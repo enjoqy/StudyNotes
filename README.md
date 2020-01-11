@@ -1,2 +1,2 @@
 # StudyNotes
-goog god study day day up
+goog good study day day up
