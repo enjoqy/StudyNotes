@@ -167,7 +167,7 @@ git fetch从远程下载最新的，而不尝试合并或rebase任何东西。
 然后git reset将主分支重置为您刚刚获取的内容。 --hard选项更改工作树中的所有文件以匹配origin/master中的文件。
 ```
 
-#### 4、git回退指定版本
+### 4、git回退指定版本
 
 ```java
 回退命令：
@@ -181,7 +181,7 @@ $ git reset --hard commit_id 退到/进到 指定commit的sha码
 $ git push origin HEAD --force
 ```
 
-##### 5、node-sass安装报错node-sass@4.12.0 postinstall: `node scripts/build.js`
+### 5、node-sass安装报错node-sass@4.12.0 postinstall: `node scripts/build.js`
 
 ```java
 先 npm install -g cnpm --registry=https://registry.npm.taobao.org下载cnpm
@@ -191,7 +191,54 @@ $ git push origin HEAD --force
 dev终于跑起来了
 ```
 
+### 6、git知识梳理
 
+#### 1、git专用名词
+
+- Workspace：工作区
+
+- Index / Stage：暂存区
+
+- Repository：仓库区（或本地仓库）
+
+- Remote：远程仓库
+
+```java
+本地分支关联远程：git branch --set-upstream-to=origin/beta beta
+```
+
+####   2、新建代码库
+
+```tex
+# 在当前目录新建一个Git代码库
+$ git init
+# 新建一个目录，将其初始化为Git代码库
+$ git init [project-name]
+# 下载一个项目和它的整个代码历史
+$ git clone [url]
+```
+
+#### 3、配置
+
+Git的设置文件为`.gitconfig`，它可以在用户主目录下（全局配置），也可以在项目目录下（项目配置）。
+
+```tex
+# 显示当前的Git配置
+$ git config --list
+# 编辑Git配置文件
+$ git config -e [--global]
+# 设置提交代码时的用户信息
+$ git config [--global] user.name "[name]"
+$ git config [--global] user.email "[email address]"
+```
+
+#### 4、增加/删除文件
+
+```tex
+# 添加指定文件到暂存区
+$ git add [file1] [file2] ...
+
+```
 
 
 
