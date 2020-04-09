@@ -38,7 +38,23 @@ firewall-cmd --reload
 
 ```
 
-## 2
+## 2.Windows相关命令
+
+### 1.查看端口占用，并解除
+
+```shell
+查看所有的端口使用情况
+netstat -aon
+
+查找指定端口
+netstat -ano|findstr "80"
+
+根据pid结束相关端口的进程
+taskkill -f /pid 20732
+
+```
+
+
 
 ## 3
 
