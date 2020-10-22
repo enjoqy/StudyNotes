@@ -375,7 +375,125 @@ b、组合
     from B
 ```
 
+## 3、mysql主从复制
 
+- 在主服务器上，您必须启用二进制日志记录并配置唯一的服务器ID。需要重启服务器。
 
+  - 编辑主服务器的配置文件 `my.cnf`，添加如下内容
 
+  - ```shell
+    [mysqld]
+    log-bin=/var/log/mysql/mysql-bin
+    server-id=1
+    ```
 
+  - 创建日志目录并赋予权限
+
+  - ```she
+    shell> mkdir /var/log/mysql
+    shell> chown mysql.mysql /var/log/mysql
+    ```
+
+  - 重启服务
+
+  - ```shell
+    shell> systemctl restart mysqld
+    ```
+
+  - 确保在主服务器上 `skip_networking` 选项处于 `OFF` 关闭状态, 这是默认值。
+
+  - ```shell
+    mysql> show variables like '%skip_networking%';
+    +-----------------+-------+
+    | Variable_name   | Value |
+    +-----------------+-------+
+    | skip_networking | OFF   |
+    +-----------------+-------+
+    1 row in set (0.00 sec)
+    ```
+
+- 应该创建一个专门用于复制数据的用户
+
+  - ```shell
+    GRANT REPLICATION SLAVE ON *.*  TO  'repl'@'%'  identified by 
+     '123456';
+    ```
+
+- 确保主从数据库的数据一致（数据库、表都需要一至）
+
+  - 如果主数据库包含现有数据，则必须将此数据复制到每个从站。有多种方法可以实现:
+
+  - 使用[**mysqldump**](https://links.jianshu.com/go?to=https%3A%2F%2Fdev.mysql.com%2Fdoc%2Frefman%2F5.7%2Fen%2Fmysqldump.html)工具创建要复制的所有数据库的转储。这是推荐的方法，尤其是在使用时 [`InnoDB`](https://links.jianshu.com/go?to=https%3A%2F%2Fdev.mysql.com%2Fdoc%2Frefman%2F5.7%2Fen%2Finnodb-storage-engine.html)。
+
+  - ```shell
+    #主服务用户
+    shell> mysqldump  -u用户名  -p密码    --all-databases  --master-data=1 > dbdump.db
+    # 复制到目标服务器（从服务器）
+    scp  dbdump.db root@192.168.25.132:/root/
+    ```
+
+- 配置从服务器，并重启
+
+  - 在`从服务器` 上编辑其配置文件 `my.cnf` 并添加如下内容：
+
+  - ```shell
+    // my.cnf 文件
+    [mysqld]
+    server-id=2
+    ```
+
+- 导入数据到从服务器，并配置连接到主服务器的相关信息
+
+  - ```shell
+    # 登录到从服务器上，执行如下操作
+    mysql> source   /root/fulldb.dump
+    
+    #登录主服务器mysql，查明mysql-bin文件名与开始行数
+    show master status;
+    +------------------+----------+--------------+------------------+
+    | File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | 
+    +------------------+----------+--------------+------------------+
+    | mysql-bin.000005 |     2217 |              |                  |                 
+    +------------------+----------+--------------+------------------+
+    
+    # #登录从服务器mysql，配置连接信息
+    CHANGE MASTER TO
+    MASTER_HOST='主服务器ip',
+    MASTER_USER='repl',
+    MASTER_PASSWORD='123456',
+    master_log_file='mysql-bin.000005', master_log_pos=2217;  --
+    ```
+
+- 启动从服务器的复制线程
+
+```mysql
+mysql> start slave;
+
+# 检查是否成功
+mysql> show slave stats\G
+
+# 这两个参数同为yes，代表主从复制开启成功
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+```
+
+## 4、mysql优化
+
+### 1、优化总结口诀
+
+全值匹配我最爱，最左前缀要遵守；
+带头大哥不能死，中间兄弟不能断；
+索引列上少计算，范围之后全失效；
+Like百分写最右，覆盖索引不写星；
+不等空值还有or，索引失效要少用；
+VAR引号不可丢，SQL高级也不难！
+
+## 2、优化总结
+
+- SQL优化的重心是查询优化，查询优化的重心是建立索引。所以查询优化**主要是避免出现导致索引失效的查询**。
+- ①避免在索引列上出现null。
+- ②不要在索引列上进行算术运算。：select age+1 from user
+- ③避免实现!=或者<>、is null或者is not null、in等可能导致全表遍历的操作。
+- ④模糊查询只能使用右边%。
+- ⑤where语句后尽可能少用小括号、或者不要出现小括号嵌套小括号。
+- 
